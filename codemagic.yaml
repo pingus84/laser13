@@ -50,9 +50,7 @@ workflows:
               {
                 "ios": {
                   "release": {
-                  “buildFlag”: [
-						            “-UseModernBuildSystem = 0”
-						                ],
+             	    "buildFlag": ["-UseModernBuildSystem = 0"],
                     "codeSignIdentity": "$identity",
                     "developmentTeam": "$team",
                     "packageType": "$package_type",
