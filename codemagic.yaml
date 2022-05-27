@@ -10,7 +10,7 @@ workflows:
           # APP_STORE_CONNECT_PRIVATE_KEY <-- Put your App Store Connect Private Key here
           # CERTIFICATE_PRIVATE_KEY <-- Put your Certificate Private Key here
       vars:
-        XCODE_WORKSPACE: "platforms/ios/HelloCordova.xcworkspace" # <-- Put the name of your workspace here.
+        XCODE_WORKSPACE: "platforms/ios/Laser13app.xcworkspace" # <-- Put the name of your workspace here.
         XCODE_SCHEME: "Laser13" # <-- Put the name of your scheme here.       
         BUNDLE_ID: "com.application.laser13" # <-- Put your Bundle Id here.
       xcode: latest
