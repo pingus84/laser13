@@ -63,7 +63,7 @@ workflows:
                 }
               }
           EOF
-          cordova build ios --prod --release --buildConfig='build.json'
+          cordova build ios --release --buildConfig='build.json'
 
     artifacts:
       - /Users/builder/clone/platforms/ios/build/device/*.ipa
