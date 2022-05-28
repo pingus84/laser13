@@ -29,8 +29,7 @@ workflows:
       - name: Setup iOS
         script: |
           cordova platform remove ios --nosave
-          cordova platform add ios --confirm --no-interactive --noresources --save  
-        
+          cordova platform add ios --confirm --no-interactive --noresources --save
       - name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
         script: |
           keychain initialize
@@ -63,7 +62,7 @@ workflows:
                 }
               }
           EOF
-          cordova build ios --release --buildConfig='build.json'
+          cordova build ios --release --device --buildConfig='build.json'
 
     artifacts:
       - /Users/builder/clone/platforms/ios/build/device/*.ipa
