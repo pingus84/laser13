@@ -1,153 +1,87 @@
 workflows:
-  ios-workflow:
-    name: iOS workflow
+  ionic-cordova-ios-workflow:
+    name: Ionic Cordova iOS Workflow
+    max_build_duration: 120
+    instance_type: mac_mini
     environment:
       groups:
+        # - manual_code_signing # <-- (Includes CM_CERTIFICATE, CM_CERTIFICATE_PASSWORD, CM_PROVISIONING_PROFILE)
+        # Automatic Code Signing
+        # https://appstoreconnect.apple.com/access/api
+        - app_store_credentials # <-- (Includes APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY, CERTIFICATE_PRIVATE_KEY)
       # Add the group environment variables in Codemagic UI (either in Application/Team variables) - https://docs.codemagic.io/variables/environment-variable-groups/
-        - appstore_credentials # <-- (APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY)
-          # APP_STORE_CONNECT_ISSUER_ID <-- Put your App Store Connect Issuer Id here 
-          # APP_STORE_CONNECT_KEY_IDENTIFIER <-- Put your App Store Connect Key Identifier here 
-          # APP_STORE_CONNECT_PRIVATE_KEY <-- Put your App Store Connect Private Key here
-          # CERTIFICATE_PRIVATE_KEY <-- Put your Certificate Private Key here
       vars:
-        XCODE_WORKSPACE: "platforms/ios/Laser13app.xcworkspace" # <-- Put the name of your workspace here.
-        XCODE_SCHEME: "Laser13" # <-- Put the name of your scheme here.       
-        BUNDLE_ID: "com.application.laser13" # <-- Put your Bundle Id here.
+        XCODE_WORKSPACE: "YOUR_WORKSPACE_NAME.xcworkspace" # <-- Put the name of your Xcode workspace here
+        XCODE_SCHEME: "YOUR_SCHEME_NAME" # <-- Put the name of your Xcode scheme here        
+        BUNDLE_ID: "YOUR_BUNDLE_ID_HERE" # <-- Put your Bundle Id here
+      node: latest
       xcode: latest
-      node: v16.11.1
-      npm: 6
-    cache:
-      cache_paths:
-        - $CM_BUILD_DIR/node_modules
+      cocoapods: default
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: develop
+          include: true
+          source: true
     scripts:
-      - name: Install dependencies
+      - name: Install npm dependencies for Ionic Cordova project and update to Cordova version 9
         script: |
-          npm install
-          npm ci
+          npm ci # equivalent of npm install for CI systems. Requires package-lock.json or npm-shrinkwrap.json to be present
           cvm install 9.0.0
-          cvm use 9.0.0
-      - name: Setup iOS
+          cvm use 9.0.0          
+      - name: Setup Cordova iOS platform
+          script: |
+            ionic cordova platform remove ios --nosave
+            ionic cordova platform add ios --confirm --no-interactive --noresources            
+      - name: Cocoapods installation
         script: |
-          cordova platform remove ios --nosave
-          cordova platform add ios --confirm --no-interactive --noresources --save  
-      - name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
+                    cd platforms/ios && pod install
+      - name: Set up keychain to be used for code signing using Codemagic CLI 'keychain' command
         script: |
-          keychain initialize
+                    keychain initialize
+      # - name: Set up Provisioning profiles from environment variables (Use with manual code signing)
+      #   script: |
+      #     PROFILES_HOME="$HOME/Library/MobileDevice/Provisioning Profiles"
+      #     mkdir -p "$PROFILES_HOME"
+      #     PROFILE_PATH="$(mktemp "$PROFILES_HOME"/$(uuidgen).mobileprovision)"
+      #     echo ${CM_PROVISIONING_PROFILE} | base64 --decode > "$PROFILE_PATH"
+      #     echo "Saved provisioning profile $PROFILE_PATH"
       - name: Fetch signing files
         script: |
-          app-store-connect fetch-signing-files $BUNDLE_ID --type IOS_APP_STORE --create
+          # app-store-connect fetch-signing-files "com.nevercode.ncionicapp" --type IOS_APP_STORE --create
+          app-store-connect fetch-signing-files $(xcode-project detect-bundle-id) --type IOS_APP_STORE --create          
       - name: Add certificates to keychain
         script: |
-          keychain add-certificates         
+                    keychain add-certificates
+      - name: Increment build number
+        script: |
+          #!/bin/sh
+          set -e
+          set -x
+          cd $CM_BUILD_DIR/platforms/ios
+          agvtool new-version -all $(($BUILD_NUMBER +1))          
       - name: Set up code signing settings on Xcode project
         script: |
-          xcode-project use-profiles
-      - name: Build iOS
+                    xcode-project use-profiles
+      - name: Build ipa for distribution
         script: |
-          package_type=$(defaults read ~/export_options.plist method)
-          identity=$(defaults read ~/export_options.plist signingCertificate)
-          team=$(defaults read ~/export_options.plist teamID)
-          profile=$(find '/Users/builder/Library/MobileDevice/Provisioning Profiles' -name "*.mobileprovision")
-          profile_uuid=$(grep UUID -A1 -a "$profile" | grep -io "[-A-F0-9]\{36\}")
-        
-          cat <<EOF > build.json
-              {
-                "ios": {
-                  "release": {
-                    "codeSignIdentity": "$identity",
-                    "developmentTeam": "$team",
-                    "packageType": "$package_type",
-                    "provisioningProfile": "$profile_uuid"
-                  }
-                }
-              }
-          EOF
-          cordova build ios --release --device --buildConfig='build.json' 
+                    xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
     artifacts:
-      - /Users/builder/clone/platforms/ios/build/device/*.ipa
-      - /tmp/xcodebuild_logs/*.log           
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
     publishing:
-      # See the following link for details about email publishing - https://docs.codemagic.io/publishing-yaml/distribution/#email
+      app_store_connect:
+          api_key: $APP_STORE_CONNECT_PRIVATE_KEY      # Contents of the API key
+          key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER    # Alphanumeric value that identifies the API key
+          issuer_id: $APP_STORE_CONNECT_ISSUER_ID      # Alphanumeric value that identifies who created the API key
+          submit_to_testflight: true        # Optional boolean, defaults to false. Whether or not to submit the uploaded build to TestFlight to automatically enroll your build to beta testers. 
       email:
         recipients:
-          - user_1@example.com
-          - user_2@example.com
+          - user_one@example.com
+          - user_two@example.com
         notify:
-          success: true     # To not receive a notification when a build succeeds
-          failure: false    # To not receive a notification when a build fails
-      slack: 
-        # See the following link about how to connect your Slack account - https://docs.codemagic.io/publishing-yaml/distribution/#slack
-        channel: '#channel-name'
-        notify_on_build_start: true   # To receive a notification when a build starts
-        notify:
-          success: true               # To receive a notification when a build succeeds
-          failure: false              # To not receive a notification when a build fails
-      app_store_connect:                 
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY         # Contents of the API key, can also reference environment variable such as $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER       # Alphanumeric value that identifies the API key, can also reference environment variable such as $APP_STORE_CONNECT_KEY_IDENTIFIER
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID         # Alphanumeric value that identifies who created the API key, can also reference environment variable such as $APP_STORE_CONNECT_ISSUER_ID
-        submit_to_testflight: false                     # Optional boolean, defaults to false. Whether or not to submit the uploaded build to TestFlight beta review. Required for distributing to beta groups. Note: This action is performed during post-processing.
-        # beta_groups:                                  # Specify the names of beta tester groups that will get access to the build once it has passed beta review. 
-        #      - group name 1
-        #      - group name 2  
-  android-workflow:
-    name: Android workflow
-    environment:
-      groups:
-        # Add the group environment variables in Codemagic UI (either in Application/Team variables) - https://docs.codemagic.io/variables/environment-variable-groups/
-        - keystore_credentials # <-- (Includes KEYSTORE, KEYSTORE_PASSWORD, KEY_ALIAS_PASSWORD, KEY_ALIAS)
-          # KEYSTORE <-- Put your keystore file here
-          # KEYSTORE_PASSWORD <-- Put your keystore password here
-          # KEY_ALIAS_PASSWORD <-- Put your keystore alias password here
-          # KEY_ALIAS <-- Put your keystore alias username here
-        - google_play # <-- (Includes GCLOUD_SERVICE_ACCOUNT_CREDENTIALS - Put your google-services.json here)
-        - other
-      vars:
-        KEYSTORE_PATH: '/tmp/keystore.keystore'
-      xcode: 12.4
-      node: 12
-      npm: 6        
-    cache:
-      cache_paths:
-        - $CM_BUILD_DIR/node_modules
-    scripts:
-      - name: Install dependencies
-        script: |
-          npm install
-          npm ci
-          cvm install 9.0.0
-          cvm use 9.0.0        
-      - name: Add Android platform
-        script: |
-          set -x
-          cordova platform remove android --nosave
-          cordova platform add android --confirm --no-interactive --noresources
-      - name: Build Android
-        script: |    
-          set -x
-          set -e
-          cordova build android --release --no-interactive --prod --device
-          echo $KEYSTORE | base64 --decode > $KEYSTORE_PATH
-          UNSIGNED_APK_PATH=$(find platforms/android/app/build/outputs -name "*.apk" | head -1)
-          jarsigner -sigalg SHA1withRSA -digestalg SHA1 -keystore "${KEYSTORE_PATH}" -storepass "${KEYSTORE_PASSWORD}" -keypass "${KEY_ALIAS_PASSWORD}" "${UNSIGNED_APK_PATH}" "${KEY_ALIAS}"
-          mv $UNSIGNED_APK_PATH $(echo $UNSIGNED_APK_PATH | sed 's/-unsigned//')
-    artifacts:
-      - platforms/android/app/build/outputs/**/*.apk
-      - platforms/android/app/build/outputs/**/mapping.txt
-    publishing:
-        # See the following link for details about email publishing - https://docs.codemagic.io/publishing-yaml/distribution/#email
-        email:
-            recipients:
-                - user_1@example.com
-                - user_2@example.com
-            notify:
-              success: true     # To not receive a notification when a build succeeds
-              failure: false    # To not receive a notification when a build fails
-        slack: 
-          # See the following link about how to connect your Slack account - https://docs.codemagic.io/publishing-yaml/distribution/#slack
-          channel: '#channel-name'
-          notify_on_build_start: true   # To receive a notification when a build starts
-          notify:
-            success: true               # To receive a notification when a build succeeds
-            failure: false              # To not receive a notification when a build fails
-
+          success: false     # To not receive a notification when a build succeeds
+          failure: false     # To not receive a notification when a build fails
