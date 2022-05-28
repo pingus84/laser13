@@ -55,7 +55,7 @@ workflows:
                 "ios": {
                   "release": {
                     "codeSignIdentity": "$identity",
-                    "developmentTeam": "6WWK4363Z2",
+                    "developmentTeam": "$team",
                     "packageType": "app-store",
                     "automaticProvisioning": true,
                     "buildFlag": [
