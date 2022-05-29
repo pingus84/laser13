@@ -53,7 +53,12 @@ workflows:
                     "codeSignIdentity": "$identity",
                     "developmentTeam": "$team",
                     "packageType": "$package_type",
-                    "provisioningProfile": "$profile_uuid"
+                    "automaticProvisioning": true,
+                    "buildFlag": [
+                "EMBEDDED_CONTENT_CONTAINS_SWIFT = YES",
+                "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=NO",
+                "LD_RUNPATH_SEARCH_PATHS = \"@executable_path/Frameworks\""
+            ]
                   }
                 }
               }
