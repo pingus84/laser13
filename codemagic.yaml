@@ -4,7 +4,7 @@ workflows:
     environment:
       groups:
         # Add the group environment variables in Codemagic UI (either in Application/Team variables) - https://docs.codemagic.io/variables/environment-variable-groups/
-          - app_store_credentials # <-- (Includes APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY)
+          - appstore_credentials # <-- (Includes APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY)
             # APP_STORE_CONNECT_ISSUER_ID <-- Put your App Store Connect Issuer Id here 
             # APP_STORE_CONNECT_KEY_IDENTIFIER <-- Put your App Store Connect Key Identifier here 
             # APP_STORE_CONNECT_PRIVATE_KEY <-- Put your App Store Connect Private Key here
@@ -13,7 +13,7 @@ workflows:
           - certificate_credentials # <-- (Includes CERTIFICATE_PRIVATE_KEY - Put your Certificate Private Key here)
           - other
       vars:      
-        BUNDLE_ID: "io.codemagic.ioniccordova" # <-- Put your Bundle Id here 
+        BUNDLE_ID: "com.application.laser13" # <-- Put your Bundle Id here 
       xcode: latest
       node: v16.11.1
       npm: 6
