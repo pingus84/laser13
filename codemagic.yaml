@@ -6,9 +6,9 @@ workflows:
         - appstore_credentials # <-- Includes APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_PRIVATE_KEY, CERTIFICATE_PRIVATE_KEY
       # Add the group environment variables in Codemagic UI (either in Application/Team variables) - https://docs.codemagic.io/variables/environment-variable-groups/
       vars:
-        XCODE_WORKSPACE: "YOUR_WORKSPACE_NAME.xcworkspace" # <-- Put the name of your Xcode workspace here e.g. "platforms/ios/HelloCordova.xcworkspace"
-        XCODE_SCHEME: "YOUR_SCHEME_NAME" # <-- Put the name of your Xcode scheme here e.g. "HelloCordova"       
-        BUNDLE_ID: "YOUR_BUNDLE_ID_HERE" # <-- Put your Bundle Id here e.g. "io.codemagic.cordova"
+        XCODE_WORKSPACE: "Laser13".xcworkspace" # <-- Put the name of your Xcode workspace here e.g. "platforms/ios/HelloCordova.xcworkspace"
+        XCODE_SCHEME: "Laser13" # <-- Put the name of your Xcode scheme here e.g. "HelloCordova"       
+        BUNDLE_ID: "com.application.laser13" # <-- Put your Bundle Id here e.g. "io.codemagic.cordova"
       xcode: 12.4
       node: 12
       npm: 6
