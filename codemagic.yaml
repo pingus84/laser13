@@ -9,7 +9,7 @@ workflows:
         XCODE_WORKSPACE: "Laser13.xcworkspace" # <-- Put the name of your Xcode workspace here e.g. "platforms/ios/HelloCordova.xcworkspace"
         XCODE_SCHEME: "Laser13" # <-- Put the name of your Xcode scheme here e.g. "HelloCordova"       
         BUNDLE_ID: "com.application.laser13" # <-- Put your Bundle Id here e.g. "io.codemagic.cordova"
-      xcode: 12.4
+      xcode: latest
       node: 12
       npm: 6
     cache:
