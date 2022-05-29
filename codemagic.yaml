@@ -58,7 +58,7 @@ workflows:
                 }
               }
           EOF
-          cordova build ios --release --device --buildConfig='build.json'           
+          cordova build ios --release --device --buildFlag="-UseModernBuildSystem=0" --buildConfig='build.json'           
     artifacts:
       - /Users/builder/clone/platforms/ios/build/device/*.ipa
       - /tmp/xcodebuild_logs/*.log
