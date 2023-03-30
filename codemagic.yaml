@@ -106,7 +106,7 @@ workflows:
           # KEYSTORE_PATH: '/tmp/keystore.keystore'
         - google_play # <-- (Includes GCLOUD_SERVICE_ACCOUNT_CREDENTIALS - Put your google-services.json here)
         - other
-      xcode: 12.4
+      xcode: 14.0
       node: 12
       npm: 6        
     cache:
